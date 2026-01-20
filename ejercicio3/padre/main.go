@@ -10,23 +10,25 @@ import (
 
 func main() {
 
-	cmd := exec.Command("go", "run", "../hijo/main.go")
+	// Recuerda compilar el archivo hijo antes de ejecutar el padre
+	// go build -o hijo ../hijo/hijo.go
+	// Luego sólo -> go run main.go
+
+	cmd := exec.Command("../hijo/hijo")
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatalf("Error al obtener el pipe de salida estándar: %v", err)
+		log.Fatalf("Error creando Pipe: %v", err)
 	}
-
-	scanner := bufio.NewScanner(stdout)
-	go func() {
-		for scanner.Scan() {
-			fmt.Println("Padre recibió:", scanner.Text())
-		}
-	}()
 
 	if err := cmd.Start(); err != nil {
 		log.Fatalf("Error al iniciar el proceso hijo: %v", err)
 	}
+
+	reader := bufio.NewReader(stdout)
+
+	msg, _ := reader.ReadString('\n')
+	fmt.Print(msg)
 
 	comando1 := "1. Enviar la señal SIGUSR1 al proceso hijo."
 	comando2 := "2. Enviar la señal SIGUSR2 al proceso hijo."
@@ -43,8 +45,20 @@ func main() {
 		switch choice {
 		case 1:
 			cmd.Process.Signal(syscall.SIGUSR1)
+			msg, _ := reader.ReadString('\n')
+			fmt.Print(msg)
+
 		case 2:
 			cmd.Process.Signal(syscall.SIGUSR2)
+			msg, _ := reader.ReadString('\n')
+			fmt.Print(msg)
+
+			msg, _ = reader.ReadString('\n')
+			fmt.Print(msg)
+
+			cmd.Wait()
+			return
+
 		case 3:
 			err := cmd.Process.Signal(syscall.Signal(0))
 			if err == nil {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,29 +9,28 @@ import (
 
 func main() {
 
-	//wait for signal
+	// Recuerda compilar el archivo hijo antes de ejecutar el padre
+	// go build -o hijo ../hijo/hijo.go
+
+	fmt.Println("Hijo: proceso iniciado")
+
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGUSR1, syscall.SIGUSR2)
-
-	writer := bufio.NewWriter(os.Stdout)
-	writer.WriteString("Hijo: proceso iniciado\n")
-	writer.Flush()
 
 	for {
 		sig := <-sigChan
 
 		switch sig {
 		case syscall.SIGUSR1:
-			writer.WriteString("Hijo: señal SIGUSR1 recibida\n")
-			writer.Flush()
+			fmt.Println("Hijo: señal SIGUSR1 recibida")
+
 		case syscall.SIGUSR2:
-			writer.WriteString("Hijo: señal SIGUSR2 recibida\n")
-			writer.WriteString("Hijo: proceso terminado\n")
-			writer.Flush()
+			fmt.Println("Hijo: señal SIGUSR2 recibida")
+			fmt.Println("Hijo: proceso terminado")
 			os.Exit(0)
+
 		default:
-			writer.WriteString("Señal desconocida\n")
-			writer.Flush()
+			fmt.Println("Señal desconocida")
 		}
 	}
 
